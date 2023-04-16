@@ -5,7 +5,10 @@
 
 void InitTable(int* table); // 전방선언 
 void ShowTable(int* table);
+void HideTable(int* table);
 void UserSelect(int* userTable, int* comTable);
+void ComSelect(int* userTable, int* comTable);
+int CheckBingo(int* table);
 
 int main()
 {
@@ -21,6 +24,7 @@ int main()
 
     //게임 진행 변수 선언
     bool isPlaying = true;
+    bool isMyTurn = true;
 
     // 게임 진행
     while (isPlaying)
@@ -29,13 +33,49 @@ int main()
         InitTable(nUserTable);
         InitTable(nComTable);
 
-        while (nUserBingo < 3 && nComBingo < 3)
+        while (true)
         {
             system("cls");
 
-            ShowTable(nComTable);
+            //nUserBingo < 3 && nComBingo < 3
+            
+            // 빙고 확인
+            nUserBingo = CheckBingo(nUserTable);
+            nComBingo = CheckBingo(nComTable);
+
+            // 테이블 확인
+            HideTable(nComTable);
+            cout << "컴퓨터 빙고 : " << nComBingo << endl << endl;
             ShowTable(nUserTable);
-            UserSelect(nUserTable, nComTable);
+            cout << "유저 빙고 : " << nUserBingo << endl;
+
+            if (nUserBingo >= 3 && nComBingo >= 3)
+            {
+                cout << "빙고 동시 달성!! 비겼습니다." << endl;
+                break;
+            }
+            else if (nUserBingo >= 3)
+            {
+                cout << "유저 빙고 달성!! 이겼습니다." << endl;
+                break;
+            }
+            else if (nComBingo >= 3)
+            {
+                cout << "컴퓨터 빙고 달성!! 졌습니다." << endl;
+                break;
+            }
+
+            // 번호 선택
+            if (isMyTurn)
+            {
+                UserSelect(nUserTable, nComTable);
+                isMyTurn = false;
+            }
+            else
+            {
+                ComSelect(nUserTable, nComTable);
+                isMyTurn = true;
+            }
         }
 
         // 게임 종료 선택
@@ -94,12 +134,31 @@ void ShowTable(int* table)
     }
 }
 
+void HideTable(int* table)
+{
+    cout << "=========================================" << endl;
+    for (int i = 0; i < 25; i++)
+    {
+        if(table[i] == 0)
+            cout << "|  0\t|";
+        else
+            cout << "|  ?\t|";
+
+        if (i % 5 == 4)
+        {
+            cout << endl;
+            cout << "=========================================" << endl;
+        }
+    }
+}
+
 void UserSelect(int* userTable, int* comTable)
 {
     int nSelect;
 
     cout << "선택 (1 ~ 25) : ";
-    cin >> nSelect;
+    cin >> nSelect; // 문자를 넣으면 버그가 생겨서 예외처리가 필요하지만 지금 굳이 만들 필요는 없고
+                    // API로 넘어가면 필요없음
 
     // 테이블 전체를 검사
     for (int i = 0; i < 25; i++)
@@ -128,4 +187,120 @@ void UserSelect(int* userTable, int* comTable)
             Sleep(1000);
         }
     }
+}
+
+/*
+    컴퓨터의 AI 향상
+    우선순위 Table 만들기
+    [3] [0] [0] [0] [3]    [3] [0] [0] [0] [4]
+    [0] [3] [0] [3] [0]    [0] [3] [0] [3] [1]
+    [0] [0] [4] [0] [0] -> [1] [1] [5] [1] [X]
+    [0] [3] [0] [3] [0]    [0] [3] [0] [3] [1]
+    [3] [0] [0] [0] [3]    [3] [0] [0] [0] [4]
+*/
+
+void ComSelect(int* userTable, int* comTable)
+{
+    int nIndex = 0;
+    int nSelect;
+
+    cout << "컴퓨터 선택 중";
+    Sleep(500);
+    cout << ".";
+    Sleep(500);
+    cout << ".";
+    Sleep(500);
+    cout << "." << endl;
+
+    while (true) // 이전에 선택된 적이 없는 칸(배열의 Index)을 선택한다.
+    {
+        nIndex = rand() % 25;
+        nSelect = comTable[nIndex];
+        
+        if (nSelect != 0) // 숫자가 남은 칸을 찾았으면
+        {
+            for (int i = 0; i < 25; i++) // 유저 테이블에서 선택된 숫자를 처리하고
+            {
+                if (nSelect == userTable[i])
+                {
+                    userTable[i] = 0;
+                    break;
+                }
+            }
+
+            comTable[nIndex] = 0; // 컴퓨터 테이블에서도 선택된 숫자를 처리한다.
+            break;
+        }
+    }
+
+    cout << "컴퓨터 선택 : " << nSelect << endl;
+    Sleep(2000);
+}
+
+int CheckBingo(int* table)
+{
+    int nBingo = 0;
+
+    // 가로 검사 5
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            if (table[i * 5 + j] == 0) // 한칸씩 선택 유무 확인
+            {
+                if (j == 4) // 제일 마지막칸까지 선택이 되어있는 경우라면
+                {
+                    nBingo++;
+                }
+            }
+            else
+                break;
+        }
+    }
+
+    // 세로 검사 5
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            if (table[j * 5 + i] == 0) // 한칸씩 선택 유무 확인
+            {
+                if (j == 4) // 제일 마지막칸까지 선택이 되어있는 경우라면
+                {
+                    nBingo++;
+                }
+            }
+            else
+                break;
+        }
+    }
+
+    // 왼쪽 사선
+    for (int i = 0; i < 5; i++)
+    {
+        if (table[i * 5 + i] == 0)
+        {
+            if (i == 4) // 제일 마지막칸까지 선택이 되어있는 경우라면
+            {
+                nBingo++;
+            }
+            else
+                break;
+        }
+    }
+
+    // 오른쪽 사선
+    for (int i = 0; i < 5; i++)
+    {
+        if (table[(i + 1) * 4] == 0)
+        {
+            if (i == 4) // 제일 마지막칸까지 선택이 되어있는 경우라면
+            {
+                nBingo++;
+            }
+            else
+                break;
+        }
+    }
+    return nBingo;
 }
