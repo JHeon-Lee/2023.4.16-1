@@ -284,9 +284,9 @@ int CheckBingo(int* table)
             {
                 nBingo++;
             }
-            else
-                break;
         }
+        else
+            break;
     }
 
     // 오른쪽 사선
@@ -298,9 +298,9 @@ int CheckBingo(int* table)
             {
                 nBingo++;
             }
-            else
-                break;
         }
+        else
+            break;
     }
     return nBingo;
 }
